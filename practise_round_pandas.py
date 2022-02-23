@@ -48,60 +48,27 @@ def run_file(filein, fileout, tempdir):
     clients = readfile(filein)
     print(clients)
 
-    like_ingredient = pd.DataFrame(columns = ['Like'])
-    i = 0
-    for ind in clients.index:
-        like_ingredient = like_ingredient.append(pd.DataFrame(clients['Like'][ind], columns = ['Like']))
-        i += 1
-    print(like_ingredient)
-
-    dislike_ingredient = pd.DataFrame(columns = ['Dislike'])
-    i = 0
-    for ind in clients.index:
-        dislike_ingredient = dislike_ingredient.append(pd.DataFrame(clients['Dislike'][ind], columns = ['Dislike']))
-        i += 1
-    print(dislike_ingredient)
-
     # calculate count by ingredient
-    like_df = like_ingredient.stack().value_counts().reset_index()
-    like_df.columns = ['Word', 'Frequency']
+    like_df = clients['like'].str.split(expand=True).stack().value_counts().reset_index()
+    like_df.columns = ['like', 'frequency_like']
+    like_df = like_df.set_index('like')
     print(like_df)
 
-    dislike_df = dislike_ingredient.stack().value_counts().reset_index()
-    dislike_df.columns = ['Word', 'Frequency']
+    dislike_df = clients['dislike'].str.split(expand=True).stack().value_counts().reset_index()
+    dislike_df.columns = ['dislike', 'frequency_dislike']
+    dislike_df = dislike_df.set_index('dislike')
     print(dislike_df)
 
+    # left join
+    join_df = pd.merge(like_df, dislike_df, how="left", left_index=True, right_index=True).fillna(0)
+    print(join_df)
 
-    like_ingredient = dict()
-    dislike_ingredient = dict()
-    for c in clients:
-        for i in c.like:
-            if i in like_ingredient:
-                like_ingredient[i] += 1
-            else:
-                like_ingredient[i] = 1
-        for i in c.dislike:
-            if i in dislike_ingredient:
-                dislike_ingredient[i] += 1
-            else:
-                dislike_ingredient[i] = 1
+    # filter if dislike >= like
+    filter_df = join_df[(join_df['frequency_like'] > join_df['frequency_dislike'])]
+    print(filter_df)
 
-    #print(like_ingredient)
-    #print(dislike_ingredient)
-
-    # remove from like if dislike >=
-    for i in like_ingredient:
-        if i in dislike_ingredient:
-            if dislike_ingredient[i] >= like_ingredient[i]:
-                like_ingredient[i] = 0
-
-    # keep > 0
-    onepizza_ingredient = []
-    for skey, svalue in like_ingredient.items():
-        if svalue>0:
-            onepizza_ingredient.append(skey)
-    #print(onepizza_ingredient)
-    outputfile(fileout, onepizza_ingredient)
+    print(filter_df.index.values.tolist())
+    outputfile(fileout, filter_df.index.values.tolist())
 
 
 def readfile(filein):
@@ -111,25 +78,24 @@ def readfile(filein):
     # split line 1
     clients_count = int(f.readline())
 
-    # clients (list of Client)
-    clients = []
-    clients = pd.DataFrame(columns = ['Like', 'Dislike'])
+    # clients (dataframe of Client)
+    clients = pd.DataFrame(columns = ['like', 'dislike'])
     i = 0
     for c in range(clients_count):
         array_like = f.readline().split()
         array_dislike = f.readline().split()
-        clients.loc[i] = [array_like[1:], array_dislike[1:]]
+        clients.loc[i] = [' '.join(array_like[1:]), ' '.join(array_dislike[1:])]
         i += 1
 
     f.close()
     return clients
 
 
-def outputfile(fileout, onepizza_ingredient):
+def outputfile(fileout, onepizza_ingredient_list):
 
     print(f"Write output in: {fileout}")
     fout = open(fileout, "w")
-    fout.write(str(len(onepizza_ingredient))+' '+" ".join(onepizza_ingredient))
+    fout.write(str(len(onepizza_ingredient_list))+' '+" ".join(onepizza_ingredient_list))
     fout.close()
 
 
