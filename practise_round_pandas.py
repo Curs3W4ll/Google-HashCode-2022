@@ -21,7 +21,7 @@ WORKDIR = '.'
 def main():
     basedir = WORKDIR
     tempdir = basedir+'/temp/'
-    fileextension = 'a_an_example.in.txt'
+    fileextension = 'c_coarse.in.txt'
     listfilein = []
     if MODE_KAGGLE:
         fileextension = '.in'
@@ -66,6 +66,19 @@ def run_file(filein, fileout, tempdir):
     # filter if dislike >= like
     filter_df = join_df[(join_df['frequency_like'] > join_df['frequency_dislike'])]
     print(filter_df)
+
+    # average
+    print(join_df.mean())
+
+    # group by + size/group
+    print(join_df.groupby('frequency_like').size())
+
+    # transform
+    join_df['sum'] = join_df['frequency_like'] + join_df['frequency_dislike']
+    print(join_df)
+
+    # https://www.analyticsvidhya.com/blog/2021/05/pandas-functions-13-most-important/ 
+    print(join_df.describe())
 
     print(filter_df.index.values.tolist())
     outputfile(fileout, filter_df.index.values.tolist())
