@@ -5,6 +5,7 @@ import pandas as pd
 
 def readfile(filein):
 
+    print(f"Read input from: {filein}")
     f = open(filein, "r")
 
     tmp = f.readline()
