@@ -9,7 +9,7 @@ def main():
     basedir = '.'
     #fileextension = 'f_find_great_mentors.in.txt'
     fileextension = 'a_an_example.in.txt'
-    fileextension = '.txt'
+    #fileextension = '.txt'
     listfilein = []
     print(basedir+'/inputs/')
     for dirname, _, filenames in os.walk(basedir+'/inputs/'):
@@ -32,6 +32,8 @@ def run_file(filein, fileout):
     # print(projects_skills)
     # print("\nProjects infos:")
     # print(projects_infos)
+    contributors_skills['dispo'] = True
+    contributors_skills['skill_assigned_to'] = ""
 
     projects = projects_infos.sort_values(by=['award'], ascending=False)
 
@@ -42,16 +44,13 @@ def run_file(filein, fileout):
 
     for inc in range(projects.index.size):
         proj_name = projects.loc[inc]['name']
-        if is_faisable(proj_name):
+        if is_faisable(contributors_skills, project_skills, proj_name):
             project_skills_list = project_skills[(project_skills['name'] == proj_name)]
             assign_worker_to_role(contributors_skills, project_skills_list)
 
     project_organization = createoutputtable()
     generateoutput(fileout, project_organization)
 
-
-def is_faisable(ff):
-    return True
 
 def assign_worker_to_role(contributors, project_skills):
     like_df = contributors['name'].str.split(expand=True).stack().value_counts().reset_index()
@@ -69,6 +68,33 @@ def assign_worker_to_role(contributors, project_skills):
             good_contributor.loc[good_contributor.index, ['dispo']] = False
             good_contributor.loc[good_contributor.index, ['skill_assigned_to']] = project_skill['skill_name']
         print(good_contributor)
+
+
+def get_contributors_with_skill(contributors, skill, lvl):
+
+    return contributors[(contributors["skill_name"]==skill) &
+                                         (contributors["skill_lvl"]>=lvl) &
+                                         (contributors["dispo"]==True)]
+
+def assign(assigned, contributors):
+    for i, row in contributors.iterrows():
+        print(row)
+        if not row["name"] in assigned:
+            assigned.append(row["name"])
+            return assigned
+    return []
+
+def is_faisable(contributors, projects_skills, project):
+
+    project_skills = projects_skills[(projects_skills["name"]==project)]
+    assigned = []
+    #print(project_skills)
+
+    for i, row in project_skills.iterrows():
+        assigned = assign(assigned, get_contributors_with_skill(contributors, row["skill_name"], row["skill_lvl"]))
+        if assigned == []:
+            return False;
+    return True
 
 
 def readfile(filein):
