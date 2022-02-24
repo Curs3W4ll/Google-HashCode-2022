@@ -40,7 +40,7 @@ def main():
         proj_name = projects.loc[inc]['name']
         if is_faisable(proj_name):
             project_skills_list = project_skills[(project_skills['name'] == proj_name)]
-            assign_worker_to_role(contributors, project_skills_list)
+            assign_worker_to_role(contributors, project_skills_list, organization, proj_name)
 
 def create_df_contrib_sample():
     data = [{'name': 'Anna', 'skill_name': 'C++', 'skill_lvl':2},
@@ -55,7 +55,17 @@ def create_df_contrib_sample():
 def is_faisable(ff):
     return True
 
-def assign_worker_to_role(contributors, project_skills):
+def add_to_organization(organization, contributor, project_name):
+    row = organization.loc(organization['name'] == project_name)
+    #  if row:
+    #  else:
+    last_pos = organization['project_pos'].max()
+    new_row = {'name': project_name, 'contributors': contributor['name'], 'project_pos': last_pos + 1}
+    print(new_row)
+    organization.append(new_row)
+    return organization
+
+def assign_worker_to_role(contributors, project_skills, organization, project_name):
     like_df = contributors['name'].str.split(expand=True).stack().value_counts().reset_index()
     like_df.columns = ['name', 'id']
     nb_worker = like_df['name'].drop_duplicates().size
@@ -67,10 +77,9 @@ def assign_worker_to_role(contributors, project_skills):
                                         (contributors['dispo'] == True)].head(1)
 
         if good_contributor.index.size >= 1:
-            print(good_contributor)
             good_contributor.loc[good_contributor.index, ['dispo']] = False
             good_contributor.loc[good_contributor.index, ['skill_assigned_to']] = project_skill['skill_name']
-        print(good_contributor)
+        add_to_organization(organization, good_contributor, project_name)
 
 if __name__ == "__main__":
     main()

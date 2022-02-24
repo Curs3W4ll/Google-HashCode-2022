@@ -3,13 +3,14 @@
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 
+import math
 import os
 
 def main():
     basedir = '.'
     #fileextension = 'f_find_great_mentors.in.txt'
-    fileextension = 'a_an_example.in.txt'
-    #fileextension = '.txt'
+    #  fileextension = 'b_better_start_small.in.txt'
+    fileextension = '.txt'
     listfilein = []
     print(basedir+'/inputs/')
     for dirname, _, filenames in os.walk(basedir+'/inputs/'):
@@ -26,6 +27,7 @@ def main():
 def run_file(filein, fileout):
 
     contributors_skills, projects_skills, projects_infos = readfile(filein)
+    organization = createoutputtable()
     # print("Contributors skills:")
     # print(contributors_skills)
     # print("\nProjects skills:")
@@ -46,13 +48,25 @@ def run_file(filein, fileout):
         proj_name = projects.loc[inc]['name']
         if is_faisable(contributors_skills, project_skills, proj_name):
             project_skills_list = project_skills[(project_skills['name'] == proj_name)]
-            assign_worker_to_role(contributors_skills, project_skills_list)
+            organization = assign_worker_to_role(contributors_skills, project_skills_list, proj_name, organization)
 
-    project_organization = createoutputtable()
-    generateoutput(fileout, project_organization)
+    generateoutput(fileout, organization)
+
+def add_to_organization(organization, contributor, project_name):
+    row = organization[(organization['name'] == project_name)]
+    contributor_name = contributor['name'].iloc[0]
+    last_pos = organization['project_pos'].max()
+    if math.isnan(last_pos):
+        last_pos = 0
+    if row.empty:
+        new_row = pd.DataFrame([{'name': project_name, 'contributors': contributor_name, 'project_pos': last_pos + 1}])
+        organization = pd.concat([organization, new_row], ignore_index = True)
+    else:
+        organization.loc[row.index, 'contributors'] = organization.loc[row.index, 'contributors'] + ' ' + contributor_name
+    return organization
 
 
-def assign_worker_to_role(contributors, project_skills):
+def assign_worker_to_role(contributors, project_skills, project_name, organization):
     like_df = contributors['name'].str.split(expand=True).stack().value_counts().reset_index()
     like_df.columns = ['name', 'id']
     nb_worker = like_df['name'].drop_duplicates().size
@@ -64,10 +78,10 @@ def assign_worker_to_role(contributors, project_skills):
                                         (contributors['dispo'] == True)].head(1)
 
         if good_contributor.index.size >= 1:
-            print(good_contributor)
             good_contributor.loc[good_contributor.index, ['dispo']] = False
             good_contributor.loc[good_contributor.index, ['skill_assigned_to']] = project_skill['skill_name']
-        print(good_contributor)
+        organization = add_to_organization(organization, good_contributor, project_name)
+    return organization
 
 
 def get_contributors_with_skill(contributors, skill, lvl):
@@ -78,7 +92,6 @@ def get_contributors_with_skill(contributors, skill, lvl):
 
 def assign(assigned, contributors):
     for i, row in contributors.iterrows():
-        print(row)
         if not row["name"] in assigned:
             assigned.append(row["name"])
             return assigned
@@ -155,7 +168,7 @@ def readfile(filein):
 def generateoutput(fileout, project_organization):
 
     print("About to write organization")
-    print(project_organization)
+    #  print(project_organization)
     print(f"\nWrite output in: {fileout}")
     fout = open(fileout, "w")
 
@@ -173,12 +186,7 @@ def generateoutput(fileout, project_organization):
 
 
 def createoutputtable():
-    data = [{'contributors': 'Bob Anna', 'name': 'WebServer', 'project_pos':0},
-        {'contributors': 'Maria Bob', 'name': 'WebChat', 'project_pos':2},
-        {'contributors': 'Anna', 'name': 'Logging', 'project_pos':1},
-        ]
-    #  project_organization = pd.DataFrame(columns = ['contributors', 'name', 'project_pos'])
-    project_organization = pd.DataFrame(data)
+    project_organization = pd.DataFrame(columns = ['name', 'contributors', 'project_pos'])
     return project_organization
 
 
