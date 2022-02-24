@@ -44,7 +44,7 @@ def assign_worker_to_role(contributors, project_skill):
     if good_contributor.index.size >= 1:
         print(good_contributor)
         good_contributor.loc[good_contributor.index, ['dispo']] = False
-        good_contributor.loc[good_contributor.index, ['skill_assigned_to']] = project_skill['name']
+        good_contributor.loc[good_contributor.index, ['skill_assigned_to']] = project_skill['skill_name']
     print(good_contributor)
 
 
