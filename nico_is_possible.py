@@ -3,33 +3,64 @@
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 
+def get_contributors_with_skill(contributors, skill, lvl):
+
+    return contributors[(contributors["skill_name"]==skill) &
+                                         (contributors["skill_lvl"]>=lvl) &
+                                         (contributors["dispo"]==True)]
+
+def assign(assigned, contributors):
+    for i, row in contributors.iterrows():
+        print(row)
+        if not row["name"] in assigned:
+            assigned.append(row["name"])
+            return assigned
+    return []
+
+def is_possible(contributors, projects_skills, project):
+
+    project_skills = projects_skills[(projects_skills["name"]==project)]
+    assigned = []
+    #print(project_skills)
+
+    for i, row in project_skills.iterrows():
+        assigned = assign(assigned, get_contributors_with_skill(contributors, row["skill_name"], row["skill_lvl"]))
+        if assigned == []:
+            return False;
+    return True
+
 def available_skills(contributors, project):
 
-    #df[(df["Name"]=="Tom") & (df["Age"]==42)]
-    table = contributors[(contributors["skill_name"]==project["skill_name"]) & (contributors["skill_lvl"]>=project["skill_lvl"]) & (contributors["dispo"]==True)]
-    print(table)
-    #print(contributors.groupby('skill_name').mean())
-    return 0
+    contributors_list = contributors[(contributors["skill_name"]==project["skill_name"]) &
+                                     (contributors["skill_lvl"]>=project["skill_lvl"]) &
+                                     (contributors["dispo"]==True)]
+
+    nb_contributors = len(contributors_list.index)
+    if (nb_contributors == 0):
+        return False
+    return True
 
 
 def main():
     df_contribs_skills = create_df_contrib_sample()
-    print(df_contribs_skills)
+    #print(df_contribs_skills)
     df_projects_skills = create_df_project_skill_sample()
-    print(df_projects_skills)
+    #print(df_projects_skills)
     df_projects_infos = create_df_project_info_sample()
-    print(df_projects_infos)
+    #print(df_projects_infos)
 
-    df_projects_skills.insert(4, "dispo", [True, True, True, True, True], True)
+    df_contribs_skills["dispo"] = True
 
-    available_skills(df_contribs_skills, df_projects_skills.iloc[2])
+    print(is_possible(df_contribs_skills, df_projects_skills, "WebServer"))
+    print(df_contribs_skills)
+    #print(available_skills(df_contribs_skills, df_projects_skills.iloc[2]))
 
 
 
 def create_df_contrib_sample():
-    data = [{'name': 'Anna', 'skill_name': 'C++', 'skill_lvl':2},
-        {'name': 'Bob', 'skill_name': 'HTML', 'skill_lvl':5},
-        {'name': 'Bob', 'skill_name': 'CSS', 'skill_lvl':5},
+    data = [{'name': 'Bob', 'skill_name': 'HTML', 'skill_lvl':5},
+        {'name': 'Bob', 'skill_name': 'C++', 'skill_lvl':5},
+        {'name': 'Anna', 'skill_name': 'C++', 'skill_lvl':2},
         {'name': 'Maria', 'skill_name': 'Python', 'skill_lvl':3},
         ]
     df = pd.DataFrame(data)
