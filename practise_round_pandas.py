@@ -112,15 +112,6 @@ def outputfile(fileout, onepizza_ingredient_list):
     fout.close()
 
 
-class Client:
-    def __init__(self, like, dislike):
-        self.like = like
-        self.dislike = dislike
-
-    def __repr__(self):
-        return str((self.like,self.dislike))
-
-
 if __name__ == "__main__":
     # execute only if run as a script
     main()
