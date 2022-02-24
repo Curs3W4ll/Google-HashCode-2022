@@ -21,7 +21,8 @@ WORKDIR = '.'
 def main():
     basedir = WORKDIR
     tempdir = basedir+'/temp/'
-    fileextension = 'c_coarse.in.txt'
+    #fileextension = 'c_coarse.in.txt'
+    fileextension = 'a_an_example.in.txt'
     listfilein = []
     if MODE_KAGGLE:
         fileextension = '.in'
@@ -80,8 +81,32 @@ def run_file(filein, fileout, tempdir):
     # https://www.analyticsvidhya.com/blog/2021/05/pandas-functions-13-most-important/ 
     print(join_df.describe())
 
-    print(filter_df.index.values.tolist())
-    outputfile(fileout, filter_df.index.values.tolist())
+    result_ingredient_list = filter_df.index.values.tolist()
+
+    print(f"Result: {str(result_ingredient_list)}")
+    score = simulation(clients, result_ingredient_list)
+    print(f"Score: {score}/{str(len(clients.index))}\n")
+
+    outputfile(fileout, result_ingredient_list)
+
+
+# simulate a result
+def simulation(clients, result_list):
+
+    clients['satisfied'] = clients.apply(lambda x: is_satisfied(x['like'].split(' '), x['dislike'].split(' '), result_list), axis=1)
+    print(clients)
+    return(len(clients[clients['satisfied']].index))
+
+
+# function to calculate if a client is satisfied
+def is_satisfied(like_list, dislike_list, result_list):
+
+    is_like = all(item in result_list for item in like_list)
+    #print(is_like)
+    is_dislike = all(item in result_list for item in dislike_list)
+    #print(is_dislike)
+
+    return(is_like and not is_dislike)
 
 
 def readfile(filein):
