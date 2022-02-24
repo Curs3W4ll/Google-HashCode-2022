@@ -8,7 +8,7 @@ import os
 def main():
     basedir = '.'
     #fileextension = 'f_find_great_mentors.in.txt'
-    #fileextension = 'a_an_example.in.txt'
+    fileextension = 'a_an_example.in.txt'
     fileextension = '.txt'
     listfilein = []
     print(basedir+'/inputs/')
@@ -32,8 +32,43 @@ def run_file(filein, fileout):
     # print(projects_skills)
     # print("\nProjects infos:")
     # print(projects_infos)
+
+    projects = projects_infos.sort_values(by=['award'], ascending=False)
+
+    data_project_skills = projects_skills
+
+    project_skills = pd.DataFrame(data_project_skills)
+    # project_skill = {'name': 'Logging', 'skill_name': 'C++', 'skill_lvl':5, 'skill_pos':0}
+
+    for inc in range(projects.index.size):
+        proj_name = projects.loc[inc]['name']
+        if is_faisable(proj_name):
+            project_skills_list = project_skills[(project_skills['name'] == proj_name)]
+            assign_worker_to_role(contributors_skills, project_skills_list)
+
     project_organization = createoutputtable()
     generateoutput(fileout, project_organization)
+
+
+def is_faisable(ff):
+    return True
+
+def assign_worker_to_role(contributors, project_skills):
+    like_df = contributors['name'].str.split(expand=True).stack().value_counts().reset_index()
+    like_df.columns = ['name', 'id']
+    nb_worker = like_df['name'].drop_duplicates().size
+
+    for n in project_skills.index:
+        project_skill = project_skills.loc[n]
+        good_contributor = contributors[(contributors['skill_name'] == project_skill['skill_name']) &
+                                        (contributors['skill_lvl'] >= project_skill['skill_lvl'])   &
+                                        (contributors['dispo'] == True)].head(1)
+
+        if good_contributor.index.size >= 1:
+            print(good_contributor)
+            good_contributor.loc[good_contributor.index, ['dispo']] = False
+            good_contributor.loc[good_contributor.index, ['skill_assigned_to']] = project_skill['skill_name']
+        print(good_contributor)
 
 
 def readfile(filein):
