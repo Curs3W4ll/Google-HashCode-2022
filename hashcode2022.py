@@ -8,11 +8,11 @@ import os
 
 def main():
     basedir = '.'
+    fileextension = '.txt'
     #fileextension = 'f_find_great_mentors.in.txt'
     #fileextension = 'a_an_example.in.txt'
     #fileextension = 'b_better_start_small.in.txt'
     #fileextension = 'c_collaboration.in.txt'
-    fileextension = '.txt'
     listfilein = []
     #print(basedir+'/inputs/')
     for dirname, _, filenames in os.walk(basedir+'/inputs/'):
@@ -53,8 +53,12 @@ def run_file(filein, fileout):
         if is_faisable(contributors_skills, project_skills, proj_name):
             project_skills_list = project_skills[(project_skills['name'] == proj_name)]
             organization = assign_worker_to_role(contributors_skills, project_skills_list, proj_name, organization)
+            # free contributors for other project
+            contributors_skills['dispo'] = True
+            contributors_skills['skill_assigned_to'] = ""
 
     generateoutput(fileout, organization)
+
 
 def add_to_organization(organization, contributor, project_name):
     row = organization[(organization['name'] == project_name)]
@@ -87,6 +91,7 @@ def assign_worker_to_role(contributors, project_skills, project_name, organizati
         organization = add_to_organization(organization, good_contributor, project_name)
         #print('project_name: ' + project_name + ', skill_name:' + project_skill['skill_name'])
         #print(contributors)
+
     return organization
 
 
