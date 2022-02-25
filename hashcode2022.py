@@ -9,13 +9,15 @@ import os
 def main():
     basedir = '.'
     #fileextension = 'f_find_great_mentors.in.txt'
-    #  fileextension = 'b_better_start_small.in.txt'
+    #fileextension = 'a_an_example.in.txt'
+    #fileextension = 'b_better_start_small.in.txt'
+    #fileextension = 'c_collaboration.in.txt'
     fileextension = '.txt'
     listfilein = []
-    print(basedir+'/inputs/')
+    #print(basedir+'/inputs/')
     for dirname, _, filenames in os.walk(basedir+'/inputs/'):
         for filename in filenames:
-            print(os.path.join(dirname, filename))
+            #print(os.path.join(dirname, filename))
             pathfilename = os.path.join(dirname, filename)
             if pathfilename.endswith(fileextension):
                 listfilein.append((pathfilename, filename))
@@ -25,6 +27,8 @@ def main():
 
 
 def run_file(filein, fileout):
+
+    print(f"\Reazd input in: {filein}")
 
     contributors_skills, projects_skills, projects_infos = readfile(filein)
     organization = createoutputtable()
@@ -67,20 +71,22 @@ def add_to_organization(organization, contributor, project_name):
 
 
 def assign_worker_to_role(contributors, project_skills, project_name, organization):
-    like_df = contributors['name'].str.split(expand=True).stack().value_counts().reset_index()
-    like_df.columns = ['name', 'id']
-    nb_worker = like_df['name'].drop_duplicates().size
 
     for n in project_skills.index:
         project_skill = project_skills.loc[n]
         good_contributor = contributors[(contributors['skill_name'] == project_skill['skill_name']) &
                                         (contributors['skill_lvl'] >= project_skill['skill_lvl'])   &
-                                        (contributors['dispo'] == True)].head(1)
+                                        (contributors['dispo'])].head(1)
 
         if good_contributor.index.size >= 1:
-            good_contributor.loc[good_contributor.index, ['dispo']] = False
-            good_contributor.loc[good_contributor.index, ['skill_assigned_to']] = project_skill['skill_name']
+            contributors.loc[good_contributor.index, ['dispo']] = False
+            contributors.loc[good_contributor.index, ['skill_assigned_to']] = project_skill['skill_name']
+            # block contributor for the other skill (a contributor can only be assigned to one skill)
+            contrib_name = good_contributor['name'].values[0]
+            contributors.loc[contributors['name'] == contrib_name, 'dispo'] = False
         organization = add_to_organization(organization, good_contributor, project_name)
+        #print('project_name: ' + project_name + ', skill_name:' + project_skill['skill_name'])
+        #print(contributors)
     return organization
 
 
@@ -88,7 +94,7 @@ def get_contributors_with_skill(contributors, skill, lvl):
 
     return contributors[(contributors["skill_name"]==skill) &
                                          (contributors["skill_lvl"]>=lvl) &
-                                         (contributors["dispo"]==True)]
+                                         (contributors["dispo"])]
 
 def assign(assigned, contributors):
     for i, row in contributors.iterrows():
@@ -99,6 +105,8 @@ def assign(assigned, contributors):
 
 def is_faisable(contributors, projects_skills, project):
 
+    #if (project != 'ClassroomProv4'):
+    #    return False
     project_skills = projects_skills[(projects_skills["name"]==project)]
     assigned = []
     #print(project_skills)
